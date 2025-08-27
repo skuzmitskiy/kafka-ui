@@ -50,23 +50,35 @@ class Mask extends MaskingPolicy {
       return sb.toString();
     };
   }
-
   private JsonNode maskWithFieldsCheck(JsonNode node) {
+    return maskWithFieldsCheck(node, new java.util.ArrayList<>());
+  }
+
+  private JsonNode maskWithFieldsCheck(JsonNode node, java.util.List<String> path) {
     if (node.isObject()) {
       ObjectNode obj = ((ObjectNode) node).objectNode();
       node.fields().forEachRemaining(f -> {
         String fieldName = f.getKey();
         JsonNode fieldVal = f.getValue();
-        if (fieldShouldBeMasked(fieldName)) {
+        
+        java.util.List<String> currentPath = new java.util.ArrayList<>(path);
+        currentPath.add(fieldName);
+        
+        if (fieldShouldBeMasked(fieldName) || fieldShouldBeMasked(currentPath)) {
           obj.set(fieldName, maskNodeRecursively(fieldVal));
         } else {
-          obj.set(fieldName, maskWithFieldsCheck(fieldVal));
+          obj.set(fieldName, maskWithFieldsCheck(fieldVal, currentPath));
         }
       });
       return obj;
     } else if (node.isArray()) {
       ArrayNode arr = ((ArrayNode) node).arrayNode(node.size());
-      node.elements().forEachRemaining(e -> arr.add(maskWithFieldsCheck(e)));
+      int index = 0;
+      for (JsonNode element : node) {
+        java.util.List<String> currentPath = new java.util.ArrayList<>(path);
+        currentPath.add(String.valueOf(index++));
+        arr.add(maskWithFieldsCheck(element, currentPath));
+      }
       return arr;
     }
     return node;

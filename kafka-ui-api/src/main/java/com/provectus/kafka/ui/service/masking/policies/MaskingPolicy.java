@@ -2,6 +2,7 @@ package com.provectus.kafka.ui.service.masking.policies;
 
 import com.fasterxml.jackson.databind.node.ContainerNode;
 import com.provectus.kafka.ui.config.ClustersProperties;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -32,6 +33,10 @@ public abstract class MaskingPolicy {
 
   protected boolean fieldShouldBeMasked(String fieldName) {
     return fieldsSelector.shouldBeMasked(fieldName);
+  }
+
+  protected boolean fieldShouldBeMasked(List<String> fieldPath) {
+    return fieldsSelector.shouldBeMasked(fieldPath);
   }
 
   public abstract ContainerNode<?> applyToJsonContainer(ContainerNode<?> node);

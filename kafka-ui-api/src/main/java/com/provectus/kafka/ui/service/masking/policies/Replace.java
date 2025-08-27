@@ -27,23 +27,35 @@ class Replace extends MaskingPolicy {
   public ContainerNode<?> applyToJsonContainer(ContainerNode<?> node) {
     return (ContainerNode<?>) replaceWithFieldsCheck(node);
   }
-
   private JsonNode replaceWithFieldsCheck(JsonNode node) {
+    return replaceWithFieldsCheck(node, new java.util.ArrayList<>());
+  }
+
+  private JsonNode replaceWithFieldsCheck(JsonNode node, java.util.List<String> path) {
     if (node.isObject()) {
       ObjectNode obj = ((ObjectNode) node).objectNode();
       node.fields().forEachRemaining(f -> {
         String fieldName = f.getKey();
         JsonNode fieldVal = f.getValue();
-        if (fieldShouldBeMasked(fieldName)) {
+        
+        java.util.List<String> currentPath = new java.util.ArrayList<>(path);
+        currentPath.add(fieldName);
+        
+        if (fieldShouldBeMasked(fieldName) || fieldShouldBeMasked(currentPath)) {
           obj.set(fieldName, replaceRecursive(fieldVal));
         } else {
-          obj.set(fieldName, replaceWithFieldsCheck(fieldVal));
+          obj.set(fieldName, replaceWithFieldsCheck(fieldVal, currentPath));
         }
       });
       return obj;
     } else if (node.isArray()) {
       ArrayNode arr = ((ArrayNode) node).arrayNode(node.size());
-      node.elements().forEachRemaining(e -> arr.add(replaceWithFieldsCheck(e)));
+      int index = 0;
+      for (JsonNode element : node) {
+        java.util.List<String> currentPath = new java.util.ArrayList<>(path);
+        currentPath.add(String.valueOf(index++));
+        arr.add(replaceWithFieldsCheck(element, currentPath));
+      }
       return arr;
     }
     // if it is not an object or array - we have nothing to replace here
