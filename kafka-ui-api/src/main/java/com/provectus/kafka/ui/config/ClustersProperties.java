@@ -126,7 +126,6 @@ public class ClustersProperties {
     String keystoreLocation;
     String keystorePassword;
   }
-
   @Data
   public static class Masking {
     Type type;
@@ -136,6 +135,7 @@ public class ClustersProperties {
     String replacement; //used when type=REPLACE
     String topicKeysPattern;
     String topicValuesPattern;
+    Boolean enableNestedPaths = false; // New field to enable nested path support
 
     public enum Type {
       REMOVE, MASK, REPLACE
