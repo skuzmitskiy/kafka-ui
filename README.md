@@ -1,3 +1,13 @@
+# Decommissioned Project
+
+**NOTICE: No Further Support or Active Development**
+
+## Successor Project / Maintained Fork
+
+If you are looking for an actively maintained version of this project, please refer to:
+- [kafbat/kafka-ui](kafbat/kafka-ui](https://github.com/kafbat/kafka-ui))
+------------------
+
 ![UI for Apache Kafka logo](documentation/images/kafka-ui-logo.png) UI for Apache Kafka&nbsp;
 ------------------
 #### Versatile, fast and lightweight web UI for managing Apache Kafka® clusters. Built by developers, for developers.
