@@ -13,10 +13,13 @@ import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.confluent.kafka.serializers.protobuf.KafkaProtobufDeserializer;
 import java.util.Map;
 import lombok.SneakyThrows;
+import org.apache.kafka.common.header.Headers;
 
 interface MessageFormatter {
 
   String format(String topic, byte[] value);
+
+  String format(String topic, Headers headers, byte[] value);
 
   static Map<SchemaType, MessageFormatter> createMap(SchemaRegistryClient schemaRegistryClient) {
     return Map.of(
@@ -48,6 +51,13 @@ interface MessageFormatter {
       var schema = AvroSchemaUtils.getSchema(deserialized);
       return JsonAvroConversion.convertAvroToJson(deserialized, schema).toString();
     }
+
+    @Override
+    public String format(String topic, Headers headers, byte[] value) {
+      Object deserialized = avroDeserializer.deserialize(topic, headers, value);
+      var schema = AvroSchemaUtils.getSchema(deserialized);
+      return JsonAvroConversion.convertAvroToJson(deserialized, schema).toString();
+    }
   }
 
   class ProtobufMessageFormatter implements MessageFormatter {
@@ -67,6 +77,17 @@ interface MessageFormatter {
           .preservingProtoFieldNames()
           .print(message);
     }
+
+    @Override
+    @SneakyThrows
+    public String format(String topic, Headers headers, byte[] value) {
+      final Message message = (Message) protobufDeserializer.deserialize(topic, headers, value);
+      return JsonFormat.printer()
+          .includingDefaultValueFields()
+          .omittingInsignificantWhitespace()
+          .preservingProtoFieldNames()
+          .print(message);
+    }
   }
 
   class JsonSchemaMessageFormatter implements MessageFormatter {
@@ -79,6 +100,12 @@ interface MessageFormatter {
     @Override
     public String format(String topic, byte[] value) {
       JsonNode json = jsonSchemaDeserializer.deserialize(topic, value);
+      return json.toString();
+    }
+
+    @Override
+    public String format(String topic, Headers headers, byte[] value) {
+      JsonNode json = jsonSchemaDeserializer.deserialize(topic, headers, value);
       return json.toString();
     }
   }

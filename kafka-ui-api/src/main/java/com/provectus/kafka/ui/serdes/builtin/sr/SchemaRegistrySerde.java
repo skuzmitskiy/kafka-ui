@@ -10,6 +10,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.provectus.kafka.ui.exception.ValidationException;
 import com.provectus.kafka.ui.serde.api.DeserializeResult;
 import com.provectus.kafka.ui.serde.api.PropertyResolver;
+import com.provectus.kafka.ui.serde.api.RecordHeader;
 import com.provectus.kafka.ui.serde.api.SchemaDescription;
 import com.provectus.kafka.ui.serdes.BuiltInSerde;
 import com.provectus.kafka.ui.util.jsonschema.AvroJsonSchemaConverter;
@@ -26,22 +27,28 @@ import io.confluent.kafka.schemaregistry.json.JsonSchema;
 import io.confluent.kafka.schemaregistry.json.JsonSchemaProvider;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaProvider;
+import io.confluent.kafka.serializers.schema.id.SchemaId;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 
 
 public class SchemaRegistrySerde implements BuiltInSerde {
 
   private static final byte SR_PAYLOAD_MAGIC_BYTE = 0x0;
   private static final int SR_PAYLOAD_PREFIX_LENGTH = 5;
+
+  private static final String KEY_SCHEMA_ID_HEADER = SchemaId.KEY_SCHEMA_ID_HEADER;
+  private static final String VALUE_SCHEMA_ID_HEADER = SchemaId.VALUE_SCHEMA_ID_HEADER;
 
   public static String name() {
     return "SchemaRegistry";
@@ -279,6 +286,23 @@ public class SchemaRegistrySerde implements BuiltInSerde {
   @Override
   public Deserializer deserializer(String topic, Target type) {
     return (headers, data) -> {
+      boolean isKey = (type == Target.KEY);
+      Optional<UUID> headerGuid = extractSchemaGuidFromHeaders(headers, isKey);
+
+      if (headerGuid.isPresent()) {
+        String guidStr = headerGuid.get().toString();
+        ParsedSchema schema = getSchemaByGuid(guidStr);
+        SchemaType format = SchemaType.fromString(schema.schemaType())
+            .orElseThrow(() -> new ValidationException("Unknown schema type: " + schema.schemaType()));
+        MessageFormatter formatter = schemaRegistryFormatters.get(format);
+        org.apache.kafka.common.header.Headers nativeHeaders = toNativeHeaders(headers);
+        return new DeserializeResult(
+            formatter.format(topic, nativeHeaders, data),
+            DeserializeResult.Type.JSON,
+            Map.of("schemaGuid", guidStr, "type", format.name())
+        );
+      }
+
       var schemaId = extractSchemaIdFromMsg(data);
       SchemaType format = getMessageFormatBySchemaId(schemaId);
       MessageFormatter formatter = schemaRegistryFormatters.get(format);
@@ -291,6 +315,46 @@ public class SchemaRegistrySerde implements BuiltInSerde {
           )
       );
     };
+  }
+
+  private Optional<UUID> extractSchemaGuidFromHeaders(
+      com.provectus.kafka.ui.serde.api.RecordHeaders headers, boolean isKey) {
+    if (headers == null) {
+      return Optional.empty();
+    }
+    String headerKey = isKey ? KEY_SCHEMA_ID_HEADER : VALUE_SCHEMA_ID_HEADER;
+    for (RecordHeader header : headers) {
+      if (headerKey.equals(header.key())) {
+        byte[] value = header.value();
+        if (value != null) {
+          SchemaId schemaId = new SchemaId("", null, (UUID) null);
+          schemaId.fromBytes(ByteBuffer.wrap(value));
+          UUID guid = schemaId.getGuid();
+          if (guid != null) {
+            return Optional.of(guid);
+          }
+        }
+      }
+    }
+    return Optional.empty();
+  }
+
+  @SneakyThrows
+  private ParsedSchema getSchemaByGuid(String guid) {
+    return wrapWith404Handler(() -> schemaRegistryClient.getSchemaByGuid(guid, null))
+        .orElseThrow(() -> new ValidationException(
+            String.format("Schema for GUID '%s' not found", guid)));
+  }
+
+  private org.apache.kafka.common.header.Headers toNativeHeaders(
+      com.provectus.kafka.ui.serde.api.RecordHeaders headers) {
+    RecordHeaders nativeHeaders = new RecordHeaders();
+    if (headers != null) {
+      for (RecordHeader header : headers) {
+        nativeHeaders.add(header.key(), header.value());
+      }
+    }
+    return nativeHeaders;
   }
 
   private SchemaType getMessageFormatBySchemaId(int schemaId) {

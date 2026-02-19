@@ -48,6 +48,8 @@ import com.squareup.wire.schema.internal.parser.ProtoParser;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchema;
 import io.confluent.kafka.schemaregistry.protobuf.ProtobufSchemaUtils;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -337,8 +339,20 @@ public class ProtobufFileSerde implements BuiltInSerde {
           .toList();
     }
 
+    @SneakyThrows
+    private ProtoFile loadProtoFileFromClasspath(String resourcePath) {
+      try (InputStream in = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+        if (in == null) {
+          throw new IllegalStateException("Proto resource not found on classpath: " + resourcePath);
+        }
+        String content = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        return ProtoFile.Companion.get(ProtoParser.Companion.parse(Location.get(resourcePath), content));
+      }
+    }
+
     private Map<String, ProtoFile> knownProtoFiles() {
       return Stream.of(
+          loadProtoFileFromClasspath("wire/extensions.proto"),
           loadKnownProtoFile("google/type/color.proto", ColorProto.getDescriptor()),
           loadKnownProtoFile("google/type/date.proto", DateProto.getDescriptor()),
           loadKnownProtoFile("google/type/datetime.proto", DateTimeProto.getDescriptor()),

@@ -6,20 +6,25 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.provectus.kafka.ui.serde.api.DeserializeResult;
 import com.provectus.kafka.ui.serde.api.SchemaDescription;
 import com.provectus.kafka.ui.serde.api.Serde;
+import com.provectus.kafka.ui.serdes.RecordHeaderImpl;
+import com.provectus.kafka.ui.serdes.RecordHeadersImpl;
 import com.provectus.kafka.ui.util.jsonschema.JsonAvroConversion;
 import io.confluent.kafka.schemaregistry.avro.AvroSchema;
 import io.confluent.kafka.schemaregistry.client.MockSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
+import io.confluent.kafka.serializers.schema.id.SchemaId;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import lombok.SneakyThrows;
 import net.bytebuddy.utility.RandomString;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -128,6 +133,49 @@ class SchemaRegistrySerdeTest {
     assertThat(result.getAdditionalProperties())
         .contains(Map.entry("type", "AVRO"))
         .contains(Map.entry("schemaId", schemaId));
+  }
+
+  @Test
+  @SneakyThrows
+  void deserializeUsesSchemaGuidFromHeaderWhenPresent() {
+    AvroSchema schema = new AvroSchema(
+        "{"
+            + "  \"type\": \"record\","
+            + "  \"name\": \"TestAvroRecord1\","
+            + "  \"fields\": ["
+            + "    {\"name\": \"field1\", \"type\": \"string\"},"
+            + "    {\"name\": \"field2\", \"type\": \"int\"}"
+            + "  ]"
+            + "}"
+    );
+    String jsonValue = "{ \"field1\":\"testStr\", \"field2\": 123 }";
+    String topic = "test";
+
+    var response = registryClient.registerWithResponse(topic + "-value", schema, false, false);
+    String guidStr = response.getGuid();
+    assertThat(guidStr).as("MockSchemaRegistryClient should assign a GUID on registration").isNotNull();
+
+    // Build header bytes: magic byte V1 (0x1) + 16 UUID bytes
+    UUID guid = UUID.fromString(guidStr);
+    SchemaId schemaId = new SchemaId("AVRO", null, guid);
+    byte[] headerBytes = schemaId.guidToBytes();
+
+    // Build native Kafka headers with the schema GUID header
+    RecordHeaders nativeHeaders = new RecordHeaders();
+    nativeHeaders.add(SchemaId.VALUE_SCHEMA_ID_HEADER, headerBytes);
+
+    // Encode raw Avro bytes (no magic byte or schema ID prefix)
+    byte[] rawAvroBytes = jsonToAvro(jsonValue, schema);
+
+    // Deserialize using header-based schema ID via our wrapper
+    var result = serde.deserializer(topic, Serde.Target.VALUE)
+        .deserialize(new RecordHeadersImpl(nativeHeaders), rawAvroBytes);
+
+    assertJsonsEqual(jsonValue, result.getResult());
+    assertThat(result.getType()).isEqualTo(DeserializeResult.Type.JSON);
+    assertThat(result.getAdditionalProperties())
+        .contains(Map.entry("type", "AVRO"))
+        .contains(Map.entry("schemaGuid", guidStr));
   }
 
   @Nested

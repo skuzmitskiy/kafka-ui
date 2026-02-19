@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.collect.Lists;
 import com.provectus.kafka.ui.exception.JsonAvroConversionException;
-import io.confluent.kafka.serializers.AvroData;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -226,7 +225,7 @@ public class JsonAvroConversion {
       }
       case UNION -> {
         ObjectNode node = MAPPER.createObjectNode();
-        int unionIdx = AvroData.getGenericData().resolveUnion(avroSchema, obj);
+        int unionIdx = GenericData.get().resolveUnion(avroSchema, obj);
         Schema selectedType = avroSchema.getTypes().get(unionIdx);
         node.set(
             selectUnionTypeFieldName(avroSchema, selectedType, unionIdx),
