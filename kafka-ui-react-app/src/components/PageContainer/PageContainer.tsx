@@ -4,7 +4,7 @@ import NavBar from 'components/NavBar/NavBar';
 import * as S from 'components/PageContainer/PageContainer.styled';
 import Nav from 'components/Nav/Nav';
 import useBoolean from 'lib/hooks/useBoolean';
-import { clusterNewConfigPath } from 'lib/paths';
+import { accessErrorPage, clusterNewConfigPath } from 'lib/paths';
 import { GlobalSettingsContext } from 'components/contexts/GlobalSettingsContext';
 import { useClusters } from 'lib/hooks/api/clusters';
 import { ResourceType } from 'generated-sources';
@@ -33,12 +33,24 @@ const PageContainer: React.FC<PropsWithChildren<unknown>> = ({ children }) => {
     );
   }, [authInfo]);
 
+  const hasNoPermissions = useMemo(() => {    // If RBAC is not enabled, we assume the user has permissions, so we return false for "has no permissions".
+  if (!authInfo?.rbacEnabled) return false;
+  if (authInfo?.userInfo === undefined) return false;
+  return authInfo.userInfo.permissions.length === 0;
+  }, [authInfo]);
+
   useEffect(() => {
     if (!appInfo.hasDynamicConfig) return;
     if (clusters?.data?.length !== 0) return;
     if (!hasApplicationPermissions) return;
     navigate(clusterNewConfigPath);
   }, [clusters?.data, appInfo.hasDynamicConfig]);
+
+  useEffect(() => {
+  if (hasNoPermissions) {
+    navigate(accessErrorPage);
+  }
+}, [hasNoPermissions, navigate]);
 
   return (
     <>
