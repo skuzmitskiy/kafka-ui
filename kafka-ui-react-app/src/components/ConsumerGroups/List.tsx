@@ -62,7 +62,8 @@ const List = () => {
         header: 'Consumer Lag',
         accessorKey: 'consumerLag',
         cell: (args) => {
-          return args.getValue() || 'N/A';
+          const value = args.getValue();
+          return value ?? 'N/A';
         },
       },
       {

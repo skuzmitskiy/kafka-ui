@@ -9,6 +9,10 @@ server:
     enabled: false
   forward-headers-strategy: framework
 
+spring:
+  jackson:
+    default-property-inclusion: always
+
 auth:
   type: DISABLED
 

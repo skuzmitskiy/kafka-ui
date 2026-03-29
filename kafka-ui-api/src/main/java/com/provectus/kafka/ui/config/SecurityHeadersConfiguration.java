@@ -22,7 +22,7 @@ public class SecurityHeadersConfiguration {
       headers.add("Referrer-Policy", "strict-origin-when-cross-origin");
       headers.add("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
       headers.add("Content-Security-Policy",
-          "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; "
               + "img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'");
       return chain.filter(ctx);
     };
