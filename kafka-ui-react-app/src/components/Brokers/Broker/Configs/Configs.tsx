@@ -38,12 +38,12 @@ const Configs: React.FC = () => {
         const nameMatch = item.name
           .toLocaleLowerCase()
           .includes(keyword.toLocaleLowerCase());
-        return nameMatch
-          ? true
-          : item.value &&
-              item.value
-                .toLocaleLowerCase()
-                .includes(keyword.toLocaleLowerCase()); // try to match the keyword on any of the item.value elements when nameMatch fails but item.value exists
+        return (
+          nameMatch ||
+          String(item.value)
+            .toLocaleLowerCase()
+            .includes(keyword.toLocaleLowerCase())
+        );
       })
       .sort((a, b) => {
         if (a.source === b.source) return 0;

@@ -40,6 +40,32 @@ describe('Configs', () => {
     );
   });
 
+  it('filters by value including null values', async () => {
+    const configsWithNull = [
+      ...brokerConfigPayload,
+      {
+        name: 'some.config.with.null.value',
+        value: null,
+        source: 'DEFAULT_CONFIG',
+        isSensitive: false,
+        isReadOnly: false,
+        synonyms: [],
+      },
+    ];
+    (useBrokerConfig as jest.Mock).mockImplementation(() => ({
+      data: configsWithNull,
+    }));
+    renderComponent();
+
+    const searchInput = screen.getByPlaceholderText('Search by Key or Value');
+    await userEvent.type(searchInput, 'null');
+
+    const rows = screen.getAllByRole('row');
+    // header row + the row with null value should be visible
+    expect(rows.length).toBeGreaterThan(1);
+    expect(screen.getByText('some.config.with.null.value')).toBeInTheDocument();
+  });
+
   it('updates textbox value', async () => {
     await userEvent.click(screen.getAllByLabelText('editAction')[0]);
 
