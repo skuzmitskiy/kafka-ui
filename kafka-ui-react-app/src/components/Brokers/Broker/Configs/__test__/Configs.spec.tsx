@@ -1,5 +1,6 @@
 import React from 'react';
 import { screen } from '@testing-library/dom';
+import { cleanup } from '@testing-library/react';
 import { render, WithRoute } from 'lib/testHelpers';
 import { clusterBrokerConfigsPath } from 'lib/paths';
 import { useBrokerConfig } from 'lib/hooks/api/brokers';
@@ -13,6 +14,10 @@ const brokerId = 'Broker_Id';
 jest.mock('lib/hooks/api/brokers', () => ({
   useBrokerConfig: jest.fn(),
   useUpdateBrokerConfigByName: jest.fn(),
+}));
+
+jest.mock('use-debounce', () => ({
+  useDebouncedCallback: (fn: (e: Event) => void) => fn,
 }));
 
 describe('Configs', () => {
@@ -55,15 +60,14 @@ describe('Configs', () => {
     (useBrokerConfig as jest.Mock).mockImplementation(() => ({
       data: configsWithNull,
     }));
+    cleanup();
     renderComponent();
 
     const searchInput = screen.getByPlaceholderText('Search by Key or Value');
     await userEvent.type(searchInput, 'null');
 
-    const rows = screen.getAllByRole('row');
-    // header row + the row with null value should be visible
-    expect(rows.length).toBeGreaterThan(1);
     expect(screen.getByText('some.config.with.null.value')).toBeInTheDocument();
+    expect(screen.queryByText('compression.type')).not.toBeInTheDocument();
   });
 
   it('updates textbox value', async () => {
