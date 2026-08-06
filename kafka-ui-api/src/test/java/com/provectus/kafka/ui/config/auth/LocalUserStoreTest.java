@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,7 +17,7 @@ class LocalUserStoreTest {
   Path temporaryDirectory;
 
   @Test
-  void persistsUsersAndPasswordHashes() {
+  void persistsUsersAndPasswordHashes() throws IOException {
     var file = temporaryDirectory.resolve("users.json");
     var store = store(file);
 
@@ -28,7 +30,7 @@ class LocalUserStoreTest {
     assertThat(reloaded.findByUsername("reader").block().getAuthorities())
         .extracting(Object::toString)
         .containsExactly("ROLE_READ");
-    assertThat(file).content().doesNotContain("reader-password");
+    assertThat(Files.readString(file)).doesNotContain("reader-password");
   }
 
   @Test

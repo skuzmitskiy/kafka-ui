@@ -49,10 +49,13 @@ export const useUpdateUser = () => {
   const client = useQueryClient();
   return useMutation(
     (user: LocalUserRequest) =>
-      request<LocalUser>(`/api/auth/users/${encodeURIComponent(user.username)}`, {
-        method: 'PUT',
-        body: JSON.stringify(user),
-      }),
+      request<LocalUser>(
+        `/api/auth/users/${encodeURIComponent(user.username)}`,
+        {
+          method: 'PUT',
+          body: JSON.stringify(user),
+        }
+      ),
     { onSuccess: () => client.invalidateQueries(['localUsers']) }
   );
 };

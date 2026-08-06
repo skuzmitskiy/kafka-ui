@@ -1,4 +1,4 @@
-FROM node:16-alpine AS frontend
+FROM node:16.15.0-alpine AS frontend
 WORKDIR /build/kafka-ui-react-app
 RUN corepack enable
 COPY kafka-ui-react-app/package.json kafka-ui-react-app/pnpm-lock.yaml ./

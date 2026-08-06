@@ -46,7 +46,8 @@ public class BasicAuthSecurityConfig extends AbstractAuthSecurityConfig {
         .csrf().disable()
         .authorizeExchange()
         .pathMatchers(AUTH_WHITELIST).permitAll()
-        .pathMatchers("/api/auth/users/**").hasRole(LocalUserRole.READ_WRITE.name())
+        .pathMatchers("/api/auth/users", "/api/auth/users/**")
+        .hasRole(LocalUserRole.READ_WRITE.name())
         .pathMatchers(HttpMethod.GET, "/**").hasAnyRole(
             LocalUserRole.READ.name(), LocalUserRole.READ_WRITE.name())
         .pathMatchers(HttpMethod.HEAD, "/**").hasAnyRole(

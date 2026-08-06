@@ -20,11 +20,7 @@ const Nav: React.FC = () => {
       <S.List>
         <ClusterMenuItem to="/" title="Dashboard" isTopLevel />
         {currentUser.data?.role === 'READ_WRITE' && (
-          <ClusterMenuItem
-            to={usersPath}
-            title="User accounts"
-            isTopLevel
-          />
+          <ClusterMenuItem to={usersPath} title="User accounts" isTopLevel />
         )}
       </S.List>
       {query.data.map((cluster) => (
