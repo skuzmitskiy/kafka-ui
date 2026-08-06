@@ -1,11 +1,18 @@
 FROM node:16.15.0-alpine AS frontend
-WORKDIR /build/kafka-ui-react-app
-RUN npm install -g pnpm@7.4.0 \
+# openapi-generator-cli downloads a JAR and needs a JRE
+RUN apk add --no-cache openjdk17-jre-headless \
+    && npm install -g pnpm@7.4.0 \
     && pnpm --version
+WORKDIR /build
+# openapitools.json resolves the spec via ../kafka-ui-contract/...
+COPY kafka-ui-contract/src/main/resources/swagger/kafka-ui-api.yaml \
+     kafka-ui-contract/src/main/resources/swagger/kafka-ui-api.yaml
+WORKDIR /build/kafka-ui-react-app
 COPY kafka-ui-react-app/package.json kafka-ui-react-app/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY kafka-ui-react-app/ ./
-RUN pnpm build
+RUN pnpm gen:sources \
+    && pnpm build
 
 FROM maven:3.8-eclipse-temurin-17 AS backend
 WORKDIR /build
