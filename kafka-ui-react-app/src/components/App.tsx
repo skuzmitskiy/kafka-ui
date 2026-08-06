@@ -5,6 +5,7 @@ import {
   clusterPath,
   errorPage,
   getNonExactPath,
+  usersPath,
 } from 'lib/paths';
 import Nav from 'components/Nav/Nav';
 import PageLoader from 'components/common/PageLoader/PageLoader';
@@ -21,6 +22,7 @@ import * as S from 'components/App.styled';
 import Logo from 'components/common/Logo/Logo';
 import GitIcon from 'components/common/Icons/GitIcon';
 import DiscordIcon from 'components/common/Icons/DiscordIcon';
+import Users from 'components/Users/Users';
 
 import ConfirmationModal from './common/ConfirmationModal/ConfirmationModal';
 import { ConfirmContextProvider } from './contexts/ConfirmContext';
@@ -129,6 +131,7 @@ const App: React.FC = () => {
                     path={getNonExactPath(clusterPath())}
                     element={<ClusterPage />}
                   />
+                  <Route path={usersPath} element={<Users />} />
                   <Route
                     path={accessErrorPage}
                     element={<ErrorPage status={403} text="Access is Denied" />}
