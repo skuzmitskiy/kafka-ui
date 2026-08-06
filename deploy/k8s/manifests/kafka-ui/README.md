@@ -21,8 +21,8 @@ URL: http://kafka-ui.eisnot.ru
 | Файл | Назначение |
 |------|------------|
 | `00-namespace.yaml` | namespace `kafka-ui` |
-| `01-configmap.yaml` | brokers, auth и пути сохраняемых данных |
-| `01a-pvc.yaml` | постоянный том для конфигурации, файлов и пользователей |
+| `01-configmap.yaml` | постоянная bootstrap-конфигурация brokers и auth |
+| `01a-pvc.yaml` | постоянный том для локальных пользователей |
 | `01b-secret.yaml` | данные первого администратора |
 | `02-deployment.yaml` | Deployment и подключение PVC |
 | `03-service.yaml` | Service |
@@ -80,9 +80,14 @@ Bootstrap-данные используются только когда `/etc/ka
 ## Постоянные данные
 
 PVC `kafka-ui-data` содержит:
-- `dynamic_config.yaml` — серверы, добавленные через configuration wizard;
-- `uploads/` — загруженные сертификаты и другие файлы конфигурации;
 - `users.json` — учётные записи (пароли хранятся как BCrypt-хеши).
+
+Список Kafka-серверов хранится в Kubernetes ConfigMap `kafka-ui`, поэтому
+переживает пересоздание pod и rollout. Ветка `dev` не содержит Configuration
+Wizard из upstream `v0.7.2`: переменная `DYNAMIC_CONFIG_ENABLED` для собранного
+из этой ветки образа не поддерживается. Для runtime wizard сначала необходимо
+синхронизировать исходники с `origin/master`; после этого тот же PVC может
+хранить `/etc/kafkaui/dynamic_config.yaml` и `/etc/kafkaui/uploads/`.
 
 Перед удалением PVC сделайте snapshot или резервную копию средствами вашего
 storage class.

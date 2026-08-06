@@ -157,7 +157,9 @@ volumeMounts: {}
 
 volumes: {}
 
-# Persist dynamic cluster configuration, uploaded files and local accounts.
+# Mount the application's default /etc/kafkaui data directory.
+# Local accounts are persisted by this fork. Dynamic config and uploads are
+# persisted only when the selected image includes Configuration Wizard.
 persistence:
   enabled: false
   existingClaim: ""

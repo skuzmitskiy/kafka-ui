@@ -8,9 +8,8 @@ services:
     ports:
       - 8080:8080
     environment:
-      DYNAMIC_CONFIG_ENABLED: 'true'
-      DYNAMIC_CONFIG_PATH: /etc/kafkaui/dynamic_config.yaml
-      CONFIG_RELATED_UPLOADS_DIR: /etc/kafkaui/uploads
+      KAFKA_CLUSTERS_0_NAME: ${KAFKA_UI_CLUSTER_NAME:-local}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_UI_BOOTSTRAP_SERVERS:?Set KAFKA_UI_BOOTSTRAP_SERVERS}
       AUTH_TYPE: LOGIN_FORM
       AUTH_LOCAL_USERS_FILE: /etc/kafkaui/users.json
       AUTH_LOCAL_BOOTSTRAP_USERNAME: ${KAFKA_UI_ADMIN_USERNAME:-admin}

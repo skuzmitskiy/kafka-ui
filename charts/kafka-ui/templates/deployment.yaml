@@ -47,18 +47,10 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: {{ include "kafka-ui.imageName" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if or .Values.env .Values.yamlApplicationConfig .Values.yamlApplicationConfigConfigMap .Values.persistence.enabled}}
+          {{- if or .Values.env .Values.yamlApplicationConfig .Values.yamlApplicationConfigConfigMap}}
           env:
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}
-            {{- end }}
-            {{- if .Values.persistence.enabled }}
-            - name: DYNAMIC_CONFIG_PATH
-              value: {{ printf "%s/dynamic_config.yaml" .Values.persistence.mountPath | quote }}
-            - name: CONFIG_RELATED_UPLOADS_DIR
-              value: {{ printf "%s/uploads" .Values.persistence.mountPath | quote }}
-            - name: AUTH_LOCAL_USERS_FILE
-              value: {{ printf "%s/users.json" .Values.persistence.mountPath | quote }}
             {{- end }}
             {{- if or .Values.yamlApplicationConfig .Values.yamlApplicationConfigConfigMap}}
             - name: SPRING_CONFIG_LOCATION
