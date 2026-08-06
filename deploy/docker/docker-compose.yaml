@@ -1,10 +1,23 @@
 services:
   kafka-ui:
     container_name: kafka-ui
-    image: provectuslabs/kafka-ui:latest
+    image: ${KAFKA_UI_IMAGE:-kafka-ui-local:latest}
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
     ports:
       - 8080:8080
     environment:
       DYNAMIC_CONFIG_ENABLED: 'true'
-    #volumes:
-    #  - ./etc/config.yml:/etc/kafkaui/dynamic_config.yaml
+      DYNAMIC_CONFIG_PATH: /etc/kafkaui/dynamic_config.yaml
+      CONFIG_RELATED_UPLOADS_DIR: /etc/kafkaui/uploads
+      AUTH_TYPE: LOGIN_FORM
+      AUTH_LOCAL_USERS_FILE: /etc/kafkaui/users.json
+      AUTH_LOCAL_BOOTSTRAP_USERNAME: ${KAFKA_UI_ADMIN_USERNAME:-admin}
+      AUTH_LOCAL_BOOTSTRAP_PASSWORD: ${KAFKA_UI_ADMIN_PASSWORD:?Set KAFKA_UI_ADMIN_PASSWORD}
+    volumes:
+      - kafka-ui-data:/etc/kafkaui
+
+volumes:
+  kafka-ui-data:
+    name: kafka-ui-data

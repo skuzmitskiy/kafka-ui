@@ -156,3 +156,13 @@ initContainers: {}
 volumeMounts: {}
 
 volumes: {}
+
+# Persist dynamic cluster configuration, uploaded files and local accounts.
+persistence:
+  enabled: false
+  existingClaim: ""
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+  mountPath: /etc/kafkaui
