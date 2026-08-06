@@ -1,6 +1,7 @@
 FROM node:16.15.0-alpine AS frontend
 WORKDIR /build/kafka-ui-react-app
-RUN corepack enable
+RUN npm install -g pnpm@7.4.0 \
+    && pnpm --version
 COPY kafka-ui-react-app/package.json kafka-ui-react-app/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY kafka-ui-react-app/ ./
