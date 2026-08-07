@@ -52,6 +52,8 @@
         <!-- Frontend dependency versions -->
         <node.version>v16.15.0</node.version>
         <pnpm.version>v7.4.0</pnpm.version>
+        <!-- When true, skip frontend-maven-plugin (UI already built separately). -->
+        <skipUIBuild>false</skipUIBuild>
 
         <!-- Plugin versions -->
         <fabric8-maven-plugin.version>0.40.2</fabric8-maven-plugin.version>
