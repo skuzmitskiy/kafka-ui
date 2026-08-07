@@ -871,6 +871,7 @@ kubectl -n kafka-ui delete secret kafka-ui-auth-readonly --ignore-not-found
 
 ## Дополнительные гайды
 
+- [Документация для Confluence (эксплуатация)](documentation/confluence/Kafka-UI-Operations.md)
 - [SSO](documentation/guides/SSO.md)
 - [AWS IAM](documentation/guides/AWS_IAM.md)
 - [Docker Compose примеры](documentation/compose/DOCKER_COMPOSE.md)
