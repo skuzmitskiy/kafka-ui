@@ -258,6 +258,16 @@ docker build \
 docker push registry.example.com/kafka-ui:local-1
 ```
 
+Backend-стадия тянет Maven-зависимости через зеркало в РФ (`https://mvn-mirror.gitverse.ru`). Репозиторий Confluent остаётся на `packages.confluent.io`. Другое зеркало:
+
+```bash
+docker build \
+  --build-arg MAVEN_MIRROR_URL=https://maven-mirror.example.ru \
+  -f deploy/docker/Dockerfile \
+  -t registry.example.com/kafka-ui:local-1 \
+  .
+```
+
 Dockerfile многостадийный:
 
 1. frontend (`node:16.15.0`) — сборка React UI;
