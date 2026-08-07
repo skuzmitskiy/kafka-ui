@@ -25,16 +25,14 @@ RUN mkdir -p /root/.m2 \
        > /root/.m2/settings.xml \
     && echo "Using Maven mirror: ${MAVEN_MIRROR_URL}"
 ENV MAVEN_OPTS="-Dhttps.protocols=TLSv1.2"
+# Не используем dependency:go-offline: при только pom.xml он пытается
+# скачать локальные reactor-модули (kafka-ui-contract) как внешние артефакты.
 COPY pom.xml ./
-COPY kafka-ui-contract/pom.xml kafka-ui-contract/pom.xml
-COPY kafka-ui-serde-api/pom.xml kafka-ui-serde-api/pom.xml
-COPY kafka-ui-api/pom.xml kafka-ui-api/pom.xml
-# Parent POM lists kafka-ui-e2e-checks; needed for reactor resolution only.
-COPY kafka-ui-e2e-checks/pom.xml kafka-ui-e2e-checks/pom.xml
-RUN mvn -B -s /root/.m2/settings.xml -pl kafka-ui-api -am dependency:go-offline
 COPY kafka-ui-contract/ kafka-ui-contract/
 COPY kafka-ui-serde-api/ kafka-ui-serde-api/
 COPY kafka-ui-api/ kafka-ui-api/
+# Parent POM lists kafka-ui-e2e-checks; needed for reactor resolution only.
+COPY kafka-ui-e2e-checks/pom.xml kafka-ui-e2e-checks/pom.xml
 COPY --from=frontend /build/kafka-ui-react-app/build kafka-ui-react-app/build
 COPY etc/ etc/
 RUN mvn -B -s /root/.m2/settings.xml -pl kafka-ui-api -am -Pprod -DskipTests -DskipUIBuild=true \
