@@ -369,6 +369,9 @@
                             </execution>
                         </executions>
                         <configuration>
+                            <!-- Docker build copies sources without .git -->
+                            <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                            <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
                             <generateGitPropertiesFile>true</generateGitPropertiesFile>
                             <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
                             <includeOnlyProperties>
