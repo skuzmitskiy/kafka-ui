@@ -258,7 +258,13 @@ docker build \
 docker push registry.example.com/kafka-ui:local-1
 ```
 
-Backend-стадия тянет Maven-зависимости через зеркало в РФ (`https://mvn-mirror.gitverse.ru`). Репозиторий Confluent остаётся на `packages.confluent.io`. Другое зеркало:
+Backend-стадия тянет Maven-зависимости через зеркало в РФ (`https://mvn-mirror.gitverse.ru`). Артефакты Confluent завендорены в `deploy/docker/confluent-m2` (из РФ `packages.confluent.io` часто недоступен). Обновить кэш:
+
+```bash
+./deploy/docker/fetch-confluent-deps.sh
+```
+
+Другое зеркало Central:
 
 ```bash
 docker build \

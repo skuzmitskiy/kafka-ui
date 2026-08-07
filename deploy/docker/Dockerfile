@@ -19,11 +19,14 @@ FROM maven:3.8-eclipse-temurin-17 AS backend
 #   docker build --build-arg MAVEN_MIRROR_URL=https://your-mirror ...
 ARG MAVEN_MIRROR_URL=https://mvn-mirror.gitverse.ru
 WORKDIR /build
+# Confluent artifacts (packages.confluent.io часто недоступен из РФ).
+COPY deploy/docker/confluent-m2/ /opt/confluent-m2/
 COPY deploy/docker/maven-settings.xml /tmp/maven-settings.xml
 RUN mkdir -p /root/.m2 \
     && sed "s|__MAVEN_MIRROR_URL__|${MAVEN_MIRROR_URL}|g" /tmp/maven-settings.xml \
        > /root/.m2/settings.xml \
-    && echo "Using Maven mirror: ${MAVEN_MIRROR_URL}"
+    && echo "Using Maven mirror: ${MAVEN_MIRROR_URL}" \
+    && echo "Using vendored Confluent repo: /opt/confluent-m2"
 ENV MAVEN_OPTS="-Dhttps.protocols=TLSv1.2"
 # Не используем dependency:go-offline: при только pom.xml он пытается
 # скачать локальные reactor-модули (kafka-ui-contract) как внешние артефакты.
