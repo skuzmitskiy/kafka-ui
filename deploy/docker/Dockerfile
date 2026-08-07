@@ -29,6 +29,8 @@ COPY pom.xml ./
 COPY kafka-ui-contract/pom.xml kafka-ui-contract/pom.xml
 COPY kafka-ui-serde-api/pom.xml kafka-ui-serde-api/pom.xml
 COPY kafka-ui-api/pom.xml kafka-ui-api/pom.xml
+# Parent POM lists kafka-ui-e2e-checks; needed for reactor resolution only.
+COPY kafka-ui-e2e-checks/pom.xml kafka-ui-e2e-checks/pom.xml
 RUN mvn -B -s /root/.m2/settings.xml -pl kafka-ui-api -am dependency:go-offline
 COPY kafka-ui-contract/ kafka-ui-contract/
 COPY kafka-ui-serde-api/ kafka-ui-serde-api/
