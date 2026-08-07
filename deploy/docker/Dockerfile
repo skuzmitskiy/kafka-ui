@@ -15,18 +15,27 @@ RUN pnpm gen:sources \
     && pnpm build
 
 FROM maven:3.8-eclipse-temurin-17 AS backend
+# Российское зеркало Maven Central (GitVerse). Переопределение:
+#   docker build --build-arg MAVEN_MIRROR_URL=https://your-mirror ...
+ARG MAVEN_MIRROR_URL=https://mvn-mirror.gitverse.ru
 WORKDIR /build
+COPY deploy/docker/maven-settings.xml /tmp/maven-settings.xml
+RUN mkdir -p /root/.m2 \
+    && sed "s|__MAVEN_MIRROR_URL__|${MAVEN_MIRROR_URL}|g" /tmp/maven-settings.xml \
+       > /root/.m2/settings.xml \
+    && echo "Using Maven mirror: ${MAVEN_MIRROR_URL}"
+ENV MAVEN_OPTS="-Dhttps.protocols=TLSv1.2"
 COPY pom.xml ./
 COPY kafka-ui-contract/pom.xml kafka-ui-contract/pom.xml
 COPY kafka-ui-serde-api/pom.xml kafka-ui-serde-api/pom.xml
 COPY kafka-ui-api/pom.xml kafka-ui-api/pom.xml
-RUN mvn -B -pl kafka-ui-api -am dependency:go-offline
+RUN mvn -B -s /root/.m2/settings.xml -pl kafka-ui-api -am dependency:go-offline
 COPY kafka-ui-contract/ kafka-ui-contract/
 COPY kafka-ui-serde-api/ kafka-ui-serde-api/
 COPY kafka-ui-api/ kafka-ui-api/
 COPY --from=frontend /build/kafka-ui-react-app/build kafka-ui-react-app/build
 COPY etc/ etc/
-RUN mvn -B -pl kafka-ui-api -am -Pprod -DskipTests -DskipUIBuild=true \
+RUN mvn -B -s /root/.m2/settings.xml -pl kafka-ui-api -am -Pprod -DskipTests -DskipUIBuild=true \
     -Ddocker.skip=true package
 
 FROM azul/zulu-openjdk-alpine:17
