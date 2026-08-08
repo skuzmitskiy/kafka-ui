@@ -22,7 +22,9 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
     const error = await response.json().catch(() => null);
     throw new Error(error?.message || `Request failed (${response.status})`);
   }
-  return response.status === 204 ? (undefined as T) : response.json();
+  return response.status === 204
+    ? (undefined as unknown as T)
+    : response.json();
 };
 
 export const useCurrentUser = () =>

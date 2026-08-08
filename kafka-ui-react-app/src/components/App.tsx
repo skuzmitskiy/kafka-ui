@@ -2,6 +2,7 @@ import React, { Suspense, useCallback } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import {
   accessErrorPage,
+  clusterNewConfigPath,
   clusterPath,
   errorPage,
   getNonExactPath,
@@ -11,6 +12,7 @@ import Nav from 'components/Nav/Nav';
 import PageLoader from 'components/common/PageLoader/PageLoader';
 import Dashboard from 'components/Dashboard/Dashboard';
 import ClusterPage from 'components/Cluster/Cluster';
+import ClusterConfigForm from 'widgets/ClusterConfigForm';
 import Version from 'components/Version/Version';
 import { ThemeProvider } from 'styled-components';
 import theme from 'theme/theme';
@@ -127,6 +129,10 @@ const App: React.FC = () => {
                       element={<Dashboard />}
                     />
                   ))}
+                  <Route
+                    path={getNonExactPath(clusterNewConfigPath)}
+                    element={<ClusterConfigForm />}
+                  />
                   <Route
                     path={getNonExactPath(clusterPath())}
                     element={<ClusterPage />}

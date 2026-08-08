@@ -6,13 +6,23 @@ import { useClusters } from 'lib/hooks/api/clusters';
 import { Cluster, ServerStatus } from 'generated-sources';
 import { ColumnDef } from '@tanstack/react-table';
 import Table, { SizeCell } from 'components/common/NewTable';
+import { Button } from 'components/common/Button/Button';
+import { clusterNewConfigPath } from 'lib/paths';
+import { useCurrentUser } from 'lib/hooks/api/users';
+import { GlobalSettingsContext } from 'components/contexts/GlobalSettingsContext';
+import ClusterTableActionsCell from 'components/Dashboard/ClusterTableActionsCell';
 
 import * as S from './ClustersWidget.styled';
 import ClusterName from './ClusterName';
 
 const ClustersWidget: React.FC = () => {
   const { data } = useClusters();
+  const { data: currentUser } = useCurrentUser();
+  const appInfo = React.useContext(GlobalSettingsContext);
   const [showOfflineOnly, setShowOfflineOnly] = React.useState<boolean>(false);
+
+  const canConfigure =
+    appInfo.hasDynamicConfig && currentUser?.role === 'READ_WRITE';
 
   const config = React.useMemo(() => {
     const clusters = data || [];
@@ -26,8 +36,8 @@ const ClustersWidget: React.FC = () => {
     };
   }, [data, showOfflineOnly]);
 
-  const columns = React.useMemo<ColumnDef<Cluster>[]>(
-    () => [
+  const columns = React.useMemo<ColumnDef<Cluster>[]>(() => {
+    const initialColumns: ColumnDef<Cluster>[] = [
       { header: 'Cluster name', accessorKey: 'name', cell: ClusterName },
       { header: 'Version', accessorKey: 'version' },
       { header: 'Brokers count', accessorKey: 'brokerCount' },
@@ -35,9 +45,18 @@ const ClustersWidget: React.FC = () => {
       { header: 'Topics', accessorKey: 'topicCount' },
       { header: 'Production', accessorKey: 'bytesInPerSec', cell: SizeCell },
       { header: 'Consumption', accessorKey: 'bytesOutPerSec', cell: SizeCell },
-    ],
-    []
-  );
+    ];
+
+    if (appInfo.hasDynamicConfig) {
+      initialColumns.push({
+        header: '',
+        id: 'actions',
+        cell: ClusterTableActionsCell,
+      });
+    }
+
+    return initialColumns;
+  }, [appInfo.hasDynamicConfig]);
 
   const handleSwitch = () => setShowOfflineOnly(!showOfflineOnly);
   return (
@@ -54,14 +73,21 @@ const ClustersWidget: React.FC = () => {
           </Metrics.Indicator>
         </Metrics.Section>
       </Metrics.Wrapper>
-      <S.SwitchWrapper>
-        <Switch
-          name="switchRoundedDefault"
-          checked={showOfflineOnly}
-          onChange={handleSwitch}
-        />
-        <label>Only offline clusters</label>
-      </S.SwitchWrapper>
+      <S.Toolbar>
+        <div>
+          <Switch
+            name="switchRoundedDefault"
+            checked={showOfflineOnly}
+            onChange={handleSwitch}
+          />
+          <label>Only offline clusters</label>
+        </div>
+        {canConfigure && (
+          <Button buttonType="primary" buttonSize="M" to={clusterNewConfigPath}>
+            Configure new cluster
+          </Button>
+        )}
+      </S.Toolbar>
       <Table
         columns={columns}
         data={config?.list}

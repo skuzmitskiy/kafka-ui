@@ -107,13 +107,24 @@ UI for Apache Kafka закрывает основные операции Apache 
 | Данные | Где хранятся | Переживают redeploy? |
 |--------|--------------|----------------------|
 | Учётные записи | volume / PVC → `/etc/kafkaui/users.json` | Да, пока том не удалён |
-| Список Kafka-кластеров | ConfigMap (K8s) или env (Docker) | Да |
+| Список Kafka-кластеров (ConfigMap / env) | ConfigMap (K8s) или env (Docker) | Да |
+| Список Kafka-кластеров (Configuration Wizard) | volume / PVC → `/etc/kafkaui/dynamic_config.yaml` | Да, пока том не удалён |
 | Bootstrap-пароль | Secret (K8s) / env (Docker) | Только при первом создании `users.json` |
-| Configuration Wizard | — | **Нет в ветке `dev`** |
 
-> Ветка `dev` не содержит Configuration Wizard из upstream `v0.7.2`.
-> Переменная `DYNAMIC_CONFIG_ENABLED` для образа из этой ветки не поддерживается.
-> Список серверов задаётся через ConfigMap / env.
+> Configuration Wizard из upstream `v0.7.2` **восстановлен** в этой ветке.
+> Он включается переменной `DYNAMIC_CONFIG_ENABLED=true` (уже задана в
+> `deploy/docker/docker-compose.yaml` и `deploy/k8s/manifests/kafka-ui/01-configmap.yaml`).
+>
+> - Кнопка **Configure** (рядом с кластером) и **Configure new cluster** на дашборде,
+>   а также страницы мастера видны только пользователям с ролью `READ_WRITE`;
+>   пользователи с ролью `READ` их не видят.
+> - Изменения конфигурации через мастер сохраняются в
+>   `/etc/kafkaui/dynamic_config.yaml` на том же томе / PVC, что и `users.json`,
+>   поэтому переживают redeploy пода и теряются только при удалении тома.
+> - Кластеры, заданные через ConfigMap / env (`KAFKA_CLUSTERS_0_*`), продолжают
+>   работать независимо от `DYNAMIC_CONFIG_ENABLED`.
+> - На backend доступ к `/api/config/**` требует роли `READ_WRITE`, а `GET /api/info`
+>   разрешён обеим ролям.
 
 ### Образ
 
@@ -130,6 +141,8 @@ Upstream-образ `provectuslabs/kafka-ui` **не содержит** лока�
 | POST / PUT / PATCH / DELETE к Kafka API | запрещено | разрешено |
 | `/api/auth/me` | разрешено | разрешено |
 | `/api/auth/users` | запрещено | разрешено |
+| `GET /api/info` | разрешено | разрешено |
+| `/api/config`, `/api/config/**` (Configuration Wizard) | запрещено | разрешено |
 
 Страница **User accounts** видна только пользователям с ролью `READ_WRITE`.
 

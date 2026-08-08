@@ -86,10 +86,11 @@ curl -X POST 'https://kafka-ui.eisnot.ru/api/auth/users' \
 | Данные | Где | Redeploy pod | Delete PVC / `down -v` |
 |--------|-----|--------------|-------------------------|
 | Учётные записи (`users.json`) | PVC / volume → `/etc/kafkaui/users.json` | сохраняются | теряются |
-| Список Kafka-кластеров | ConfigMap / env | сохраняется | сохраняется (пока есть ConfigMap) |
+| Список Kafka-кластеров (ConfigMap / env) | ConfigMap / env | сохраняется | сохраняется (пока есть ConfigMap) |
+| Список Kafka-кластеров (Configuration Wizard) | PVC / volume → `/etc/kafkaui/dynamic_config.yaml` | сохраняются | теряются |
 | Bootstrap-пароль | Secret / env | только при **первом** создании `users.json` | — |
 
-> В этой ветке **нет** Configuration Wizard (`DYNAMIC_CONFIG_ENABLED` не поддерживается). Кластеры задаются только через ConfigMap / env.
+> В этой ветке Configuration Wizard (кнопка **Configure**/«Configure new cluster» в UI) **доступен**, когда задана переменная `DYNAMIC_CONFIG_ENABLED=true`. Кнопка и связанные страницы видны только пользователям с ролью `READ_WRITE` (см. `LocalUserRole`); пользователи с ролью `READ` не могут добавлять/редактировать кластеры через UI. Добавленные через wizard кластеры сохраняются в файле `/etc/kafkaui/dynamic_config.yaml` на том же PVC, что и `users.json`, поэтому переживают redeploy пода, но теряются при удалении PVC (`down -v` в docker compose). Кластеры, заданные через ConfigMap / env (`KAFKA_CLUSTERS_0_*`), продолжают работать как раньше и не зависят от `DYNAMIC_CONFIG_ENABLED`.
 
 ---
 

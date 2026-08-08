@@ -33,6 +33,15 @@ export const clusterPath = (
 
 export type ClusterNameRoute = { clusterName: ClusterName };
 
+// Cluster Config (Configuration Wizard)
+export const clusterConfigRelativePath = 'config';
+export const clusterConfigPath = (
+  clusterName: ClusterName = RouteParams.clusterName
+) => `${clusterPath(clusterName)}/${clusterConfigRelativePath}`;
+
+export const clusterNewConfigRelativePath = 'create-new-cluster';
+export const clusterNewConfigPath = `/ui/clusters/${clusterNewConfigRelativePath}`;
+
 // Brokers
 export const clusterBrokerRelativePath = 'brokers';
 export const clusterBrokerMetricsRelativePath = 'metrics';

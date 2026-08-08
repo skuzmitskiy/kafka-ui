@@ -84,7 +84,7 @@ const Users: React.FC = () => {
           Create
         </Button>
       </S.Form>
-      {error && <S.Error>{(error as Error).message}</S.Error>}
+      {!!error && <S.Error>{(error as Error).message}</S.Error>}
       <S.Table>
         <thead>
           <tr>

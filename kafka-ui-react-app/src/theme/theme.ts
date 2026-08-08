@@ -544,6 +544,7 @@ const theme = {
   },
   icons: {
     closeIcon: Colors.neutral[30],
+    closeCircleIcon: Colors.neutral[30],
     deleteIcon: Colors.red[20],
     warningIcon: Colors.yellow[20],
     messageToggleIcon: {
@@ -583,6 +584,17 @@ const theme = {
   },
   errorPage: {
     text: Colors.blue[45],
+  },
+  clusterConfigForm: {
+    inputHintText: {
+      secondary: Colors.neutral[60],
+    },
+    groupField: {
+      backgroundColor: Colors.neutral[3],
+    },
+    fileInput: {
+      color: Colors.neutral[80],
+    },
   },
 };
 
