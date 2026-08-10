@@ -1,0 +1,69 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: as-search-in-shvr
+  namespace: eis-shvr
+spec:
+  selector:
+    matchLabels:
+      app: as-search-in-shvr
+  endpoints:
+    - port: metrics
+      interval: 10s
+      path: /actuator/prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: as-search-in-shvr
+  namespace: eis-shvr
+  labels:
+    run: as-search-in-shvr
+    app: as-search-in-shvr
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: metrics
+      port: 8090
+      targetPort: 8090
+      protocol: TCP
+  selector:
+    name: as-search-in-shvr
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: as-search-in-shvr
+  namespace: eis-shvr
+spec:
+  selector:
+    matchLabels:
+      app: as-search-in-shvr
+  template:
+    metadata:
+      labels:
+        name: as-search-in-shvr
+        app: as-search-in-shvr
+    spec:
+      volumes:
+        - name: app-secret
+          secret:
+            secretName: as-search-in-shvr-secrets
+        - name: app-config
+          configMap:
+            name: as-search-in-shvr-config
+      containers:
+        - name: as-search-in-shvr
+          image: repo.fciit.ru:9445/eis2/as-search-in-shvr:1.0.0
+          volumeMounts:
+            - name: app-config
+              mountPath: /app/config
+            - name: app-secret
+              mountPath: /app/secret
+          env:
+            - name: APP_ARGS
+              value: --spring.config.additional-location=/app/config/application.properties,/app/secret/application.secret.properties

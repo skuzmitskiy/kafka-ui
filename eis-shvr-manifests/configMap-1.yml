@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: as-search-in-shvr-config
+  namespace: eis-shvr
+data:
+  application.properties: |
+    spring.profiles.active=os-logging
+    spring.kafka.bootstrap-servers=dlg-prom-kafka-01.notariat.corp:9092,dlg-prom-kafka-02.notariat.corp:9092,dlg-prom-kafka-03.notariat.corp:9092
+    spring.datasource.url=jdbc:oracle:thin:@//10.251.64.153:1521/svr_zags_search.notariat.corp
+
+    tfs.url=http://10.251.201.241
+    tfs.defaultBucket=rgw-bkt002
+
+    fs.url=https://storage-s3.notariat.corp:10443
+    fs.defaultBucket=eis-bucket
+
+    logging.kafka.servers=10.251.85.248:9092,10.251.85.249:9092,10.251.85.250:9092
+    logging.kafka.topic=shvr
