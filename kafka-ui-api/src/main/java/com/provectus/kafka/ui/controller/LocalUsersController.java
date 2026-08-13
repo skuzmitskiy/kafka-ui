@@ -30,8 +30,11 @@ public class LocalUsersController {
   private final LocalUserStore userStore;
 
   @GetMapping("/me")
-  public Mono<LocalUserView> currentUser(Principal principal) {
-    return Mono.fromSupplier(() -> userStore.get(principal.getName()));
+  public Mono<CurrentUserView> currentUser(Principal principal) {
+    return Mono.fromSupplier(() -> {
+      LocalUserView user = userStore.get(principal.getName());
+      return new CurrentUserView(user.getUsername(), user.getRole(), true);
+    });
   }
 
   @GetMapping("/users")
@@ -77,5 +80,13 @@ public class LocalUsersController {
     private String username;
     private String password;
     private LocalUserRole role;
+  }
+
+  @Data
+  @RequiredArgsConstructor
+  public static class CurrentUserView {
+    private final String username;
+    private final LocalUserRole role;
+    private final boolean canManageUsers;
   }
 }

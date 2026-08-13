@@ -102,6 +102,11 @@ UI for Apache Kafka закрывает основные операции Apache 
 - первый пользователь создаётся при старте из bootstrap-переменных, если файла ещё нет;
 - дальнейшее управление — через UI **User accounts** (`/ui/users`) или API `/api/auth/*`.
 
+При `AUTH_TYPE=LDAP` файл `users.json` **не используется**. Роли `READ` /
+`READ_WRITE` берутся из LDAP-групп (см. раздел LDAP ниже); управление
+локальными пользователями (`/api/auth/users`) недоступно. Endpoint
+`GET /api/auth/me` работает и для LDAP (нужен для кнопки Configure и навигации).
+
 ### Постоянные данные
 
 | Данные | Где хранятся | Переживают redeploy? |
@@ -186,10 +191,47 @@ curl -X POST 'https://kafka-ui.example/api/auth/users' \
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| `AUTH_TYPE` | Тип аутентификации. Для локальных пользователей — `LOGIN_FORM` | `DISABLED` |
-| `AUTH_LOCAL_USERS_FILE` | Путь к файлу пользователей | `/etc/kafkaui/users.json` |
-| `AUTH_LOCAL_BOOTSTRAP_USERNAME` | Имя первого администратора | `admin` |
-| `AUTH_LOCAL_BOOTSTRAP_PASSWORD` | Пароль первого администратора | обязателен при первом старте |
+| `AUTH_TYPE` | Тип аутентификации: `LOGIN_FORM`, `LDAP`, `OAUTH2`, `DISABLED` | `DISABLED` |
+| `AUTH_LOCAL_USERS_FILE` | Путь к файлу пользователей (**только** `LOGIN_FORM`) | `/etc/kafkaui/users.json` |
+| `AUTH_LOCAL_BOOTSTRAP_USERNAME` | Имя первого администратора (**только** `LOGIN_FORM`) | `admin` |
+| `AUTH_LOCAL_BOOTSTRAP_PASSWORD` | Пароль первого администратора (**только** `LOGIN_FORM`) | обязателен при первом старте |
+
+### LDAP (`AUTH_TYPE=LDAP`)
+
+HTTP Basic + роль из LDAP-групп. Пример compose: `documentation/compose/auth-ldap.yaml`.
+Пример Kubernetes ConfigMap/Secret: `documentation/k8s/auth-ldap-example.yaml`.
+
+Подключение к каталогу — через `spring.ldap.*`:
+
+| Переменная | Описание |
+|------------|----------|
+| `SPRING_LDAP_URLS` | URL LDAP / AD (`ldap://…`) |
+| `SPRING_LDAP_BASE` | Базовый DN каталога; DN pattern и search base тогда задаются относительно него |
+| `SPRING_LDAP_DN_PATTERN` | DN pattern пользователя, например `uid={0},ou=people,dc=example,dc=com` |
+| `SPRING_LDAP_USERFILTER_SEARCHBASE` / `SPRING_LDAP_USERFILTER_SEARCHFILTER` | Альтернатива DN pattern (нужен bind) |
+| `SPRING_LDAP_ADMINUSER` | Bind DN (ConfigMap допустим) |
+| `SPRING_LDAP_ADMINPASSWORD` | Bind password — **только Secret**, не ConfigMap |
+
+Роли приложения:
+
+| Переменная | Property | Описание | По умолчанию |
+|------------|----------|----------|--------------|
+| `AUTH_LDAP_READ_GROUP` | `auth.ldap.read-group` | LDAP-группа → `READ` | — |
+| `AUTH_LDAP_READ_WRITE_GROUP` | `auth.ldap.read-write-group` | LDAP-группа → `READ_WRITE` | — |
+| `AUTH_LDAP_DEFAULT_ROLE` | `auth.ldap.default-role` | Роль, если группа не совпала: `READ`, `READ_WRITE` или `NONE` | `READ` |
+| `AUTH_LDAP_GROUP_SEARCH_BASE` | `auth.ldap.group-search-base` | База поиска групп (non-AD). Пусто = без поиска групп | — |
+| `AUTH_LDAP_GROUP_SEARCH_FILTER` | `auth.ldap.group-search-filter` | Фильтр; `{0}` = DN пользователя | `(member={0})` |
+| `AUTH_LDAP_GROUP_ROLE_ATTRIBUTE` | `auth.ldap.group-role-attribute` | Атрибут имени группы | `cn` |
+| `AUTH_LDAP_ACTIVE_DIRECTORY_ENABLED` | `auth.ldap.active-directory.enabled` | Режим Active Directory | `false` |
+| `AUTH_LDAP_ACTIVE_DIRECTORY_DOMAIN` | `auth.ldap.active-directory.domain` | AD domain | — |
+
+Сравнение имён групп — case-insensitive; допускаются формы `ROLE_…` и DN `CN=…`.
+При AD группы берутся из ответа `ActiveDirectoryLdapAuthenticationProvider`
+(отдельный group search не нужен). Legacy: `OAUTH2_LDAP_ACTIVEDIRECTORY` /
+`oauth2.ldap.activeDirectory.domain` (в т.ч. старый ключ с кириллической «с»).
+
+`GET /api/auth/me` → `{"username":"…","role":"READ"|"READ_WRITE"}`.
+`/api/auth/users/**` для LDAP запрещён.
 
 ### Кластеры Kafka
 

@@ -1,10 +1,14 @@
 ---
 version: '2'
+# LDAP auth example for this fork (role-mapped READ / READ_WRITE).
+# Build/run image from this branch, e.g.:
+#   export KAFKA_UI_IMAGE=kafka-ui-local:latest
+# Upstream provectuslabs/kafka-ui does not include this role mapping.
 services:
 
   kafka-ui:
     container_name: kafka-ui
-    image: provectuslabs/kafka-ui:latest
+    image: ${KAFKA_UI_IMAGE:-kafka-ui-local:latest}
     ports:
       - 8080:8080
     depends_on:
@@ -15,22 +19,32 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka0:29092
       KAFKA_CLUSTERS_0_METRICS_PORT: 9997
       KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry0:8085
+      DYNAMIC_CONFIG_ENABLED: "true"
+
       AUTH_TYPE: "LDAP"
       SPRING_LDAP_URLS: "ldap://ldap:10389"
       SPRING_LDAP_DN_PATTERN: "cn={0},ou=people,dc=planetexpress,dc=com"
 
-#     ===== USER SEARCH FILTER INSTEAD OF DN =====
+      # Map LDAP groups → application roles (HTTP Basic).
+      # Without group search, AUTH_LDAP_DEFAULT_ROLE applies (READ by default).
+      AUTH_LDAP_READ_GROUP: "ship_crew"
+      AUTH_LDAP_READ_WRITE_GROUP: "admin_staff"
+      AUTH_LDAP_DEFAULT_ROLE: "READ"
+      AUTH_LDAP_GROUP_SEARCH_BASE: "ou=people,dc=planetexpress,dc=com"
+      AUTH_LDAP_GROUP_SEARCH_FILTER: "(member={0})"
+      AUTH_LDAP_GROUP_ROLE_ATTRIBUTE: "cn"
 
+#     ===== USER SEARCH FILTER INSTEAD OF DN =====
 #     SPRING_LDAP_USERFILTER_SEARCHBASE: "dc=planetexpress,dc=com"
 #     SPRING_LDAP_USERFILTER_SEARCHFILTER: "(&(uid={0})(objectClass=inetOrgPerson))"
-#     LDAP ADMIN USER
 #     SPRING_LDAP_ADMINUSER: "cn=admin,dc=planetexpress,dc=com"
 #     SPRING_LDAP_ADMINPASSWORD: "GoodNewsEveryone"
 
 #     ===== ACTIVE DIRECTORY =====
-
-#      OAUTH2.LDAP.ACTIVEDIRECTORY: true
-#      OAUTH2.LDAP.AСTIVEDIRECTORY.DOMAIN: "memelord.lol"
+#     AUTH_LDAP_ACTIVE_DIRECTORY_ENABLED: "true"
+#     AUTH_LDAP_ACTIVE_DIRECTORY_DOMAIN: "example.com"
+#     # Legacy (still supported): OAUTH2_LDAP_ACTIVEDIRECTORY=true
+#     # Legacy domain key had a Cyrillic 'с' typo; prefer AUTH_LDAP_ACTIVE_DIRECTORY_DOMAIN.
 
   ldap:
     image: rroemhild/test-openldap:latest

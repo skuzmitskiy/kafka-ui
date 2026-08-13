@@ -7,6 +7,10 @@ export interface LocalUser {
   role: UserRole;
 }
 
+export interface CurrentUser extends LocalUser {
+  canManageUsers: boolean;
+}
+
 export interface LocalUserRequest {
   username: string;
   password?: string;
@@ -28,7 +32,7 @@ const request = async <T>(url: string, init?: RequestInit): Promise<T> => {
 };
 
 export const useCurrentUser = () =>
-  useQuery(['currentUser'], () => request<LocalUser>('/api/auth/me'), {
+  useQuery(['currentUser'], () => request<CurrentUser>('/api/auth/me'), {
     retry: false,
   });
 

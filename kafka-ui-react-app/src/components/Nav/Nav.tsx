@@ -19,9 +19,10 @@ const Nav: React.FC = () => {
     <aside aria-label="Sidebar Menu">
       <S.List>
         <ClusterMenuItem to="/" title="Dashboard" isTopLevel />
-        {currentUser.data?.role === 'READ_WRITE' && (
-          <ClusterMenuItem to={usersPath} title="User accounts" isTopLevel />
-        )}
+        {currentUser.data?.role === 'READ_WRITE' &&
+          currentUser.data.canManageUsers && (
+            <ClusterMenuItem to={usersPath} title="User accounts" isTopLevel />
+          )}
       </S.List>
       {query.data.map((cluster) => (
         <ClusterMenu

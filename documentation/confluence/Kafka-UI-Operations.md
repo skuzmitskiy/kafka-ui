@@ -27,9 +27,10 @@
 
 В этой сборке дополнительно:
 
-- несколько локальных учётных записей;
+- несколько локальных учётных записей (`AUTH_TYPE=LOGIN_FORM`);
 - роли **READ** и **READ_WRITE**;
-- пользователи на PVC / Docker volume (`users.json`);
+- пользователи на PVC / Docker volume (`users.json`) — **только** для `LOGIN_FORM`;
+- LDAP с маппингом групп на те же роли (`AUTH_TYPE=LDAP`);
 - список Kafka-кластеров через ConfigMap / env;
 - **один** Deployment вместо схемы admin + readonly.
 
@@ -42,23 +43,23 @@
 | Роль | Возможности |
 |------|-------------|
 | `READ` | Просмотр (GET/HEAD/OPTIONS). Нет страницы User accounts. Запись в Kafka API запрещена |
-| `READ_WRITE` | Полный доступ к Kafka API + управление пользователями |
+| `READ_WRITE` | Полный доступ к Kafka API; при `LOGIN_FORM` — ещё и управление пользователями |
 
 | HTTP | `READ` | `READ_WRITE` |
 |------|--------|--------------|
 | GET / HEAD / OPTIONS | да | да |
 | POST / PUT / PATCH / DELETE (Kafka API) | нет | да |
 | `/api/auth/me` | да | да |
-| `/api/auth/users` | нет | да |
+| `/api/auth/users` (`LOGIN_FORM` only) | нет | да |
 
-Ограничения:
+Ограничения (`LOGIN_FORM`):
 
 - нельзя удалить свою учётную запись;
 - нельзя удалить / понизить последнего `READ_WRITE`;
 - username: 3–64 символа (`A-Za-z0-9._@-`);
 - пароль: минимум 8 символов.
 
-### API пользователей
+### API пользователей (только `AUTH_TYPE=LOGIN_FORM`)
 
 Базовый путь: `/api/auth` (нужна сессия после `/auth`).
 
@@ -79,13 +80,36 @@ curl -X POST 'https://kafka-ui.eisnot.ru/api/auth/users' \
   -d '{"username":"viewer","password":"viewer-password","role":"READ"}'
 ```
 
+### LDAP (`AUTH_TYPE=LDAP`)
+
+Файл `users.json` не используется. Роли назначаются по LDAP-группам;
+`GET /api/auth/me` доступен; `/api/auth/users/**` запрещён.
+
+| Переменная | Описание | По умолчанию |
+|------------|----------|--------------|
+| `SPRING_LDAP_URLS` | URL каталога | обязателен |
+| `SPRING_LDAP_BASE` | Базовый DN каталога | — |
+| `SPRING_LDAP_DN_PATTERN` | DN pattern пользователя | — |
+| `SPRING_LDAP_ADMINUSER` / `SPRING_LDAP_ADMINPASSWORD` | Bind (пароль — **Secret**) | — |
+| `AUTH_LDAP_READ_GROUP` | Группа → `READ` | — |
+| `AUTH_LDAP_READ_WRITE_GROUP` | Группа → `READ_WRITE` | — |
+| `AUTH_LDAP_DEFAULT_ROLE` | `READ` / `READ_WRITE` / `NONE` если группа не совпала | `READ` |
+| `AUTH_LDAP_GROUP_SEARCH_BASE` | База поиска групп (non-AD) | — |
+| `AUTH_LDAP_GROUP_SEARCH_FILTER` | Фильтр групп (`{0}` = user DN) | `(member={0})` |
+| `AUTH_LDAP_GROUP_ROLE_ATTRIBUTE` | Атрибут имени группы | `cn` |
+| `AUTH_LDAP_ACTIVE_DIRECTORY_ENABLED` | Режим AD | `false` |
+| `AUTH_LDAP_ACTIVE_DIRECTORY_DOMAIN` | AD domain | — |
+
+Примеры: `documentation/compose/auth-ldap.yaml`, `documentation/k8s/auth-ldap-example.yaml`.
+Production-манифесты в `deploy/k8s/manifests/kafka-ui/` по умолчанию остаются на `LOGIN_FORM`.
+
 ---
 
 ## 3. Постоянные данные
 
 | Данные | Где | Redeploy pod | Delete PVC / `down -v` |
 |--------|-----|--------------|-------------------------|
-| Учётные записи (`users.json`) | PVC / volume → `/etc/kafkaui/users.json` | сохраняются | теряются |
+| Учётные записи (`users.json`, только `LOGIN_FORM`) | PVC / volume → `/etc/kafkaui/users.json` | сохраняются | теряются |
 | Список Kafka-кластеров (ConfigMap / env) | ConfigMap / env | сохраняется | сохраняется (пока есть ConfigMap) |
 | Список Kafka-кластеров (Configuration Wizard) | PVC / volume → `/etc/kafkaui/dynamic_config.yaml` | сохраняются | теряются |
 | Bootstrap-пароль | Secret / env | только при **первом** создании `users.json` | — |
@@ -100,10 +124,10 @@ curl -X POST 'https://kafka-ui.eisnot.ru/api/auth/users' \
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| `AUTH_TYPE` | Для локальных пользователей: `LOGIN_FORM` | `DISABLED` |
-| `AUTH_LOCAL_USERS_FILE` | Файл пользователей | `/etc/kafkaui/users.json` |
-| `AUTH_LOCAL_BOOTSTRAP_USERNAME` | Первый администратор | `admin` |
-| `AUTH_LOCAL_BOOTSTRAP_PASSWORD` | Пароль первого администратора | обязателен при первом старте |
+| `AUTH_TYPE` | `LOGIN_FORM` (локальные пользователи) или `LDAP` | `DISABLED` |
+| `AUTH_LOCAL_USERS_FILE` | Файл пользователей (**только** `LOGIN_FORM`) | `/etc/kafkaui/users.json` |
+| `AUTH_LOCAL_BOOTSTRAP_USERNAME` | Первый администратор (**только** `LOGIN_FORM`) | `admin` |
+| `AUTH_LOCAL_BOOTSTRAP_PASSWORD` | Пароль первого администратора (**только** `LOGIN_FORM`) | обязателен при первом старте |
 
 ### Kafka
 
