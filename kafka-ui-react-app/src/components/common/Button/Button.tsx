@@ -8,9 +8,10 @@ interface Props
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     ButtonProps {
   to?: string | object;
+  inProgress?: boolean;
 }
 
-export const Button: React.FC<Props> = ({ to, ...props }) => {
+export const Button: React.FC<Props> = ({ to, inProgress, ...props }) => {
   if (to) {
     return (
       <Link to={to}>
@@ -18,5 +19,5 @@ export const Button: React.FC<Props> = ({ to, ...props }) => {
       </Link>
     );
   }
-  return <StyledButton {...props} />;
+  return <StyledButton {...props} disabled={props.disabled || inProgress} />;
 };

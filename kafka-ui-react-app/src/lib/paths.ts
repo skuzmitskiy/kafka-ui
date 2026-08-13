@@ -25,12 +25,22 @@ export const getNonExactPath = (path: string) => `${path}/*`;
 
 export const errorPage = '/404';
 export const accessErrorPage = '/403';
+export const usersPath = '/ui/users';
 
 export const clusterPath = (
   clusterName: ClusterName = RouteParams.clusterName
 ) => `/ui/clusters/${clusterName}`;
 
 export type ClusterNameRoute = { clusterName: ClusterName };
+
+// Cluster Config (Configuration Wizard)
+export const clusterConfigRelativePath = 'config';
+export const clusterConfigPath = (
+  clusterName: ClusterName = RouteParams.clusterName
+) => `${clusterPath(clusterName)}/${clusterConfigRelativePath}`;
+
+export const clusterNewConfigRelativePath = 'create-new-cluster';
+export const clusterNewConfigPath = `/ui/clusters/${clusterNewConfigRelativePath}`;
 
 // Brokers
 export const clusterBrokerRelativePath = 'brokers';

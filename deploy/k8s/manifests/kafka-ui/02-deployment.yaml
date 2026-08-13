@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/component: admin
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: kafka-ui
@@ -18,9 +20,13 @@ spec:
         app.kubernetes.io/name: kafka-ui
         app.kubernetes.io/component: admin
     spec:
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: kafka-ui
-          image: provectuslabs/kafka-ui:v0.7.2
+          # Build deploy/docker/Dockerfile and publish it to your registry.
+          image: kafka-ui-local:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -31,6 +37,9 @@ spec:
                 name: kafka-ui
             - secretRef:
                 name: kafka-ui-auth
+          volumeMounts:
+            - name: data
+              mountPath: /etc/kafkaui
           readinessProbe:
             httpGet:
               path: /actuator/health
@@ -52,3 +61,7 @@ spec:
             limits:
               cpu: "1"
               memory: 1Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: kafka-ui-data

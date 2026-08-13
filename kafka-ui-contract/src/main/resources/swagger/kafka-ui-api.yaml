@@ -1757,6 +1757,89 @@ paths:
               schema:
                 $ref: '#/components/schemas/TimeStampFormat'
 
+  /api/info:
+    get:
+      tags:
+        - ApplicationConfig
+      summary: Gets application info
+      operationId: getApplicationInfo
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationInfo'
+
+  /api/config:
+    get:
+      tags:
+        - ApplicationConfig
+      summary: Gets current application configuration
+      operationId: getCurrentConfig
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationConfig'
+    put:
+      tags:
+        - ApplicationConfig
+      summary: Restarts application with specified configuration
+      operationId: restartWithConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestartRequest'
+      responses:
+        200:
+          description: OK
+
+  /api/config/validated:
+    put:
+      tags:
+        - ApplicationConfig
+      summary: Validates specified configuration
+      operationId: validateConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationConfig'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationConfigValidation'
+
+  /api/config/relatedfiles:
+    post:
+      tags:
+        - ApplicationConfig
+      summary: Uploads a config-related file (keystore, truststore, etc)
+      operationId: uploadConfigRelatedFile
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadedFileInfo'
+
 components:
   schemas:
     TopicSerdeSuggestion:
@@ -2399,6 +2482,194 @@ components:
       properties:
         timeStampFormat:
           type: string
+
+    ApplicationInfo:
+      type: object
+      properties:
+        enabledFeatures:
+          type: array
+          items:
+            type: string
+            enum:
+              - DYNAMIC_CONFIG
+        build:
+          type: object
+          properties:
+            commitId:
+              type: string
+            version:
+              type: string
+            buildTime:
+              type: string
+            isLatestRelease:
+              type: boolean
+        latestRelease:
+          type: object
+          properties:
+            versionTag:
+              type: string
+            publishedAt:
+              type: string
+            htmlUrl:
+              type: string
+
+    RestartRequest:
+      type: object
+      properties:
+        config:
+          $ref: '#/components/schemas/ApplicationConfig'
+
+    UploadedFileInfo:
+      type: object
+      required: [location]
+      properties:
+        location:
+          type: string
+
+    ApplicationConfigValidation:
+      type: object
+      properties:
+        clusters:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ClusterConfigValidation'
+
+    ApplicationPropertyValidation:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: boolean
+        errorMessage:
+          type: string
+          description: Contains error message if error = true
+
+    ClusterConfigValidation:
+      type: object
+      required: [kafka]
+      properties:
+        kafka:
+          $ref: '#/components/schemas/ApplicationPropertyValidation'
+        schemaRegistry:
+          $ref: '#/components/schemas/ApplicationPropertyValidation'
+        kafkaConnects:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ApplicationPropertyValidation'
+        ksqldb:
+          $ref: '#/components/schemas/ApplicationPropertyValidation'
+
+    ApplicationConfig:
+      type: object
+      properties:
+        properties:
+          type: object
+          properties:
+            kafka:
+              type: object
+              properties:
+                clusters:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      bootstrapServers:
+                        type: string
+                      schemaRegistry:
+                        type: string
+                      schemaRegistryAuth:
+                        type: object
+                        properties:
+                          username:
+                            type: string
+                          password:
+                            type: string
+                      schemaRegistrySsl:
+                        type: object
+                        properties:
+                          keystoreLocation:
+                            type: string
+                          keystorePassword:
+                            type: string
+                          truststoreLocation:
+                            type: string
+                          truststorePassword:
+                            type: string
+                      ksqldbServer:
+                        type: string
+                      ksqldbServerAuth:
+                        type: object
+                        properties:
+                          username:
+                            type: string
+                          password:
+                            type: string
+                      ksqldbServerSsl:
+                        type: object
+                        properties:
+                          keystoreLocation:
+                            type: string
+                          keystorePassword:
+                            type: string
+                          truststoreLocation:
+                            type: string
+                          truststorePassword:
+                            type: string
+                      ssl:
+                        type: object
+                        properties:
+                          truststoreLocation:
+                            type: string
+                          truststorePassword:
+                            type: string
+                      kafkaConnect:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            address:
+                              type: string
+                            userName:
+                              type: string
+                            password:
+                              type: string
+                            keystoreLocation:
+                              type: string
+                            keystorePassword:
+                              type: string
+                            truststoreLocation:
+                              type: string
+                            truststorePassword:
+                              type: string
+                      metrics:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                          port:
+                            type: integer
+                            format: int32
+                          ssl:
+                            type: boolean
+                          username:
+                            type: string
+                          password:
+                            type: string
+                          keystoreLocation:
+                            type: string
+                          keystorePassword:
+                            type: string
+                      properties:
+                        type: object
+                        additionalProperties: true
+                      readOnly:
+                        type: boolean
+                      disableLogDirsCollection:
+                        type: boolean
 
     TopicMessageConsuming:
       type: object

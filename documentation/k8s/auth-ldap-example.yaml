@@ -1,0 +1,67 @@
+# Example: Kafka UI with AUTH_TYPE=LDAP (this fork)
+#
+# Does NOT replace production manifests under deploy/k8s/manifests/kafka-ui/
+# (those default to AUTH_TYPE=LOGIN_FORM). Copy/adapt as needed.
+#
+# Bind / admin LDAP password must live in a Secret, not a ConfigMap.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kafka-ui
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-ui-ldap
+  namespace: kafka-ui
+data:
+  KAFKA_CLUSTERS_0_NAME: prod
+  KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+  AUTH_TYPE: LDAP
+  DYNAMIC_CONFIG_ENABLED: "true"
+
+  SPRING_LDAP_URLS: "ldap://ldap.example.com:389"
+  SPRING_LDAP_BASE: "dc=example,dc=com"
+  # Either DN pattern:
+  SPRING_LDAP_DN_PATTERN: "uid={0},ou=people"
+  # Or user search (requires admin bind from Secret):
+  # SPRING_LDAP_USERFILTER_SEARCHBASE: "ou=people"
+  # SPRING_LDAP_USERFILTER_SEARCHFILTER: "(&(uid={0})(objectClass=inetOrgPerson))"
+  # SPRING_LDAP_ADMINUSER: "cn=readonly,dc=example,dc=com"
+
+  AUTH_LDAP_READ_GROUP: "kafka-ui-readers"
+  AUTH_LDAP_READ_WRITE_GROUP: "kafka-ui-admins"
+  AUTH_LDAP_DEFAULT_ROLE: "NONE"
+  AUTH_LDAP_GROUP_SEARCH_BASE: "ou=groups"
+  AUTH_LDAP_GROUP_SEARCH_FILTER: "(member={0})"
+  AUTH_LDAP_GROUP_ROLE_ATTRIBUTE: "cn"
+
+  # Active Directory (optional):
+  # AUTH_LDAP_ACTIVE_DIRECTORY_ENABLED: "true"
+  # AUTH_LDAP_ACTIVE_DIRECTORY_DOMAIN: "example.com"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kafka-ui-ldap
+  namespace: kafka-ui
+type: Opaque
+stringData:
+  # Only needed when using admin bind / user search filter
+  SPRING_LDAP_ADMINPASSWORD: "replace-me"
+---
+# Optional imperative setup:
+# kubectl -n kafka-ui create configmap kafka-ui-ldap \
+#   --from-literal=AUTH_TYPE=LDAP \
+#   --from-literal=SPRING_LDAP_URLS=ldap://ldap.example.com:389 \
+#   --from-literal=AUTH_LDAP_READ_GROUP=kafka-ui-readers \
+#   --from-literal=AUTH_LDAP_READ_WRITE_GROUP=kafka-ui-admins \
+#   --from-literal=AUTH_LDAP_DEFAULT_ROLE=NONE \
+#   --from-literal=AUTH_LDAP_GROUP_SEARCH_BASE=ou=groups,dc=example,dc=com
+# kubectl -n kafka-ui create secret generic kafka-ui-ldap \
+#   --from-literal=SPRING_LDAP_ADMINPASSWORD='replace-me'
+#
+# Wire envFrom ConfigMap + Secret into your Deployment (same pattern as
+# deploy/k8s/manifests/kafka-ui/02-deployment.yaml). Local users.json /
+# AUTH_LOCAL_* apply only to AUTH_TYPE=LOGIN_FORM — omit them for LDAP.

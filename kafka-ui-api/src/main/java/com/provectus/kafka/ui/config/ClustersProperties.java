@@ -31,6 +31,7 @@ public class ClustersProperties {
     String ksqldbServer;
     KsqldbServerAuth ksqldbServerAuth;
     WebClientSsl ksqldbServerSsl;
+    TruststoreConfig ssl;
     List<ConnectCluster> kafkaConnect;
     MetricsConfigData metrics;
     Properties properties;
@@ -50,6 +51,14 @@ public class ClustersProperties {
     boolean ssl;
     String username;
     String password;
+    String keystoreLocation;
+    String keystorePassword;
+  }
+
+  @Data
+  public static class TruststoreConfig {
+    String truststoreLocation;
+    String truststorePassword;
   }
 
   @Data

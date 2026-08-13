@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+  <!--
+    Российское зеркало Maven Central.
+    Плейсхолдер __MAVEN_MIRROR_URL__ подставляется в Dockerfile
+    (по умолчанию https://mvn-mirror.gitverse.ru).
+
+    Confluent (packages.confluent.io) из РФ часто недоступен — артефакты
+    берутся из локального кэша /opt/confluent-m2 (deploy/docker/confluent-m2).
+  -->
+  <mirrors>
+    <mirror>
+      <id>ru-maven-mirror</id>
+      <name>RU Maven Central Mirror</name>
+      <url>__MAVEN_MIRROR_URL__</url>
+      <mirrorOf>*,!confluent</mirrorOf>
+    </mirror>
+    <mirror>
+      <id>confluent-local</id>
+      <name>Vendored Confluent Maven repo</name>
+      <url>file:///opt/confluent-m2</url>
+      <mirrorOf>confluent</mirrorOf>
+    </mirror>
+  </mirrors>
+
+  <profiles>
+    <profile>
+      <id>ru-mirror</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>__MAVEN_MIRROR_URL__</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+        <repository>
+          <id>confluent</id>
+          <!-- URL перекрывается зеркалом confluent-local -->
+          <url>https://packages.confluent.io/maven/</url>
+          <releases>
+            <enabled>true</enabled>
+            <updatePolicy>never</updatePolicy>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>__MAVEN_MIRROR_URL__</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>ru-mirror</activeProfile>
+  </activeProfiles>
+</settings>

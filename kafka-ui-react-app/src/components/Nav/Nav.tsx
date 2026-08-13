@@ -1,4 +1,6 @@
 import { useClusters } from 'lib/hooks/api/clusters';
+import { useCurrentUser } from 'lib/hooks/api/users';
+import { usersPath } from 'lib/paths';
 import React from 'react';
 
 import ClusterMenu from './ClusterMenu';
@@ -7,6 +9,7 @@ import * as S from './Nav.styled';
 
 const Nav: React.FC = () => {
   const query = useClusters();
+  const currentUser = useCurrentUser();
 
   if (!query.isSuccess) {
     return null;
@@ -16,6 +19,10 @@ const Nav: React.FC = () => {
     <aside aria-label="Sidebar Menu">
       <S.List>
         <ClusterMenuItem to="/" title="Dashboard" isTopLevel />
+        {currentUser.data?.role === 'READ_WRITE' &&
+          currentUser.data.canManageUsers && (
+            <ClusterMenuItem to={usersPath} title="User accounts" isTopLevel />
+          )}
       </S.List>
       {query.data.map((cluster) => (
         <ClusterMenu

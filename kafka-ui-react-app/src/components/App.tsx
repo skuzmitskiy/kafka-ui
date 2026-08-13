@@ -2,14 +2,17 @@ import React, { Suspense, useCallback } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import {
   accessErrorPage,
+  clusterNewConfigPath,
   clusterPath,
   errorPage,
   getNonExactPath,
+  usersPath,
 } from 'lib/paths';
 import Nav from 'components/Nav/Nav';
 import PageLoader from 'components/common/PageLoader/PageLoader';
 import Dashboard from 'components/Dashboard/Dashboard';
 import ClusterPage from 'components/Cluster/Cluster';
+import ClusterConfigForm from 'widgets/ClusterConfigForm';
 import Version from 'components/Version/Version';
 import { ThemeProvider } from 'styled-components';
 import theme from 'theme/theme';
@@ -21,6 +24,7 @@ import * as S from 'components/App.styled';
 import Logo from 'components/common/Logo/Logo';
 import GitIcon from 'components/common/Icons/GitIcon';
 import DiscordIcon from 'components/common/Icons/DiscordIcon';
+import Users from 'components/Users/Users';
 
 import ConfirmationModal from './common/ConfirmationModal/ConfirmationModal';
 import { ConfirmContextProvider } from './contexts/ConfirmContext';
@@ -126,9 +130,14 @@ const App: React.FC = () => {
                     />
                   ))}
                   <Route
+                    path={getNonExactPath(clusterNewConfigPath)}
+                    element={<ClusterConfigForm />}
+                  />
+                  <Route
                     path={getNonExactPath(clusterPath())}
                     element={<ClusterPage />}
                   />
+                  <Route path={usersPath} element={<Users />} />
                   <Route
                     path={accessErrorPage}
                     element={<ErrorPage status={403} text="Access is Denied" />}

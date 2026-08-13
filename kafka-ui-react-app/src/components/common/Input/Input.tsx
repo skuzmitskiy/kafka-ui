@@ -1,8 +1,10 @@
 import React from 'react';
 import { RegisterOptions, useFormContext } from 'react-hook-form';
 import SearchIcon from 'components/common/Icons/SearchIcon';
+import { ErrorMessage } from '@hookform/error-message';
 
 import * as S from './Input.styled';
+import { InputLabel } from './InputLabel.styled';
 
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement>,
@@ -11,24 +13,39 @@ export interface InputProps
   hookFormOptions?: RegisterOptions;
   search?: boolean;
   positiveOnly?: boolean;
+  withError?: boolean;
+  label?: React.ReactNode;
+  hint?: React.ReactNode;
+  clearIcon?: React.ReactNode;
 }
 
-const Input: React.FC<InputProps> = ({
-  name,
-  hookFormOptions,
-  search,
-  inputSize = 'L',
-  type,
-  positiveOnly,
-  ...rest
-}) => {
+const Input = React.forwardRef<HTMLInputElement, InputProps>((props, ref) => {
+  const {
+    name,
+    hookFormOptions,
+    search,
+    inputSize = 'L',
+    type,
+    positiveOnly,
+    withError = false,
+    label,
+    hint,
+    clearIcon,
+    ...rest
+  } = props;
+
   const methods = useFormContext();
+
+  const fieldId = React.useId();
+
+  const isHookFormField = !!name && !!methods.register;
+
   const keyPressEventHandler = (
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     const { key, code } = event;
     if (type === 'number') {
-      // Manualy prevent input of 'e' character for all number inputs
+      // Manually prevent input of 'e' character for all number inputs
       // and prevent input of negative numbers for positiveOnly inputs
       if (key === 'e' || (positiveOnly && (key === '-' || code === 'Minus'))) {
         event.preventDefault();
@@ -55,7 +72,7 @@ const Input: React.FC<InputProps> = ({
         event.preventDefault();
 
         // for react-hook-form fields only set transformed value
-        if (name) {
+        if (isHookFormField && name) {
           methods.setValue(name, value);
         }
       }
@@ -63,25 +80,38 @@ const Input: React.FC<InputProps> = ({
   };
 
   let inputOptions = { ...rest };
-  if (name) {
+  if (isHookFormField && name) {
     // extend input options with react-hook-form options
     // if the field is a part of react-hook-form form
     inputOptions = { ...rest, ...methods.register(name, hookFormOptions) };
   }
 
   return (
-    <S.Wrapper>
-      {search && <SearchIcon />}
-      <S.Input
-        inputSize={inputSize}
-        search={!!search}
-        type={type}
-        onKeyPress={keyPressEventHandler}
-        onPaste={pasteEventHandler}
-        {...inputOptions}
-      />
-    </S.Wrapper>
+    <div>
+      {label && <InputLabel htmlFor={rest.id || fieldId}>{label}</InputLabel>}
+      <S.Wrapper>
+        {search && <SearchIcon />}
+        <S.Input
+          id={fieldId}
+          inputSize={inputSize}
+          search={!!search}
+          type={type}
+          onKeyPress={keyPressEventHandler}
+          onPaste={pasteEventHandler}
+          ref={ref}
+          {...inputOptions}
+        />
+        {clearIcon}
+
+        {withError && isHookFormField && name && (
+          <S.FormError>
+            <ErrorMessage name={name} />
+          </S.FormError>
+        )}
+        {hint && <S.InputHint>{hint}</S.InputHint>}
+      </S.Wrapper>
+    </div>
   );
-};
+});
 
 export default Input;

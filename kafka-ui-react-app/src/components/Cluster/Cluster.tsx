@@ -7,6 +7,7 @@ import {
   clusterConnectorsRelativePath,
   clusterConnectsRelativePath,
   clusterConsumerGroupsRelativePath,
+  clusterConfigRelativePath,
   clusterKsqlDbRelativePath,
   ClusterNameRoute,
   clusterSchemasRelativePath,
@@ -22,6 +23,7 @@ import Schemas from 'components/Schemas/Schemas';
 import Connect from 'components/Connect/Connect';
 import KsqlDb from 'components/KsqlDb/KsqlDb';
 import ConsumerGroups from 'components/ConsumerGroups/ConsumerGroups';
+import ClusterConfigPage from 'components/ClusterPage/ClusterConfigPage';
 
 // We can't use Lazy loading till we have a better way to update publicPath in runtime
 // Now java app replaces paths in builded index.html file.
@@ -96,6 +98,10 @@ const Cluster: React.FC = () => {
               element={<KsqlDb />}
             />
           )}
+          <Route
+            path={clusterConfigRelativePath}
+            element={<ClusterConfigPage />}
+          />
           <Route
             path="/"
             element={<Navigate to={clusterBrokerRelativePath} replace />}

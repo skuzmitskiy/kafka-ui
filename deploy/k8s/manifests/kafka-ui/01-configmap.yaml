@@ -8,7 +8,8 @@ metadata:
     app.kubernetes.io/component: admin
 data:
   # https://github.com/provectus/kafka-ui
-  DYNAMIC_CONFIG_ENABLED: "true"
   KAFKA_CLUSTERS_0_NAME: prod
   KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 10.251.86.237:9092,10.251.86.238:9092,10.251.86.239:9092
   AUTH_TYPE: LOGIN_FORM
+  AUTH_LOCAL_USERS_FILE: /etc/kafkaui/users.json
+  DYNAMIC_CONFIG_ENABLED: "true"

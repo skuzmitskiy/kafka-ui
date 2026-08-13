@@ -47,7 +47,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: {{ include "kafka-ui.imageName" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if or .Values.env  .Values.yamlApplicationConfig .Values.yamlApplicationConfigConfigMap}}
+          {{- if or .Values.env .Values.yamlApplicationConfig .Values.yamlApplicationConfigConfigMap}}
           env:
             {{- with .Values.env }}
               {{- toYaml . | nindent 12 }}
@@ -106,10 +106,14 @@ spec:
             timeoutSeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if or .Values.yamlApplicationConfig .Values.volumeMounts .Values.yamlApplicationConfigConfigMap}}
+          {{- if or .Values.yamlApplicationConfig .Values.volumeMounts .Values.yamlApplicationConfigConfigMap .Values.persistence.enabled}}
           volumeMounts:
             {{- with .Values.volumeMounts }} 
               {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if .Values.persistence.enabled }}
+            - name: kafka-ui-data
+              mountPath: {{ .Values.persistence.mountPath }}
             {{- end }}
             {{- if .Values.yamlApplicationConfig }}
             - name: kafka-ui-yaml-conf
@@ -120,10 +124,15 @@ spec:
               mountPath: /kafka-ui/
             {{- end }}
           {{- end }}
-      {{- if or .Values.yamlApplicationConfig .Values.volumes .Values.yamlApplicationConfigConfigMap}}
+      {{- if or .Values.yamlApplicationConfig .Values.volumes .Values.yamlApplicationConfigConfigMap .Values.persistence.enabled}}
       volumes:
         {{- with .Values.volumes }}
           {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.persistence.enabled }}
+        - name: kafka-ui-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "kafka-ui.fullname" .)) }}
         {{- end }}
         {{- if .Values.yamlApplicationConfig }}
         - name: kafka-ui-yaml-conf
